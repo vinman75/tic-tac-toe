@@ -112,7 +112,9 @@ class TicTacToe:
                         best_score = score
                         best_move = (i, j)
 
-        self.window.after(0, lambda: self.update_move_on_gui(best_move))
+        if best_move is not None:
+            self.window.after(0, lambda: self.update_move_on_gui(best_move))
+
 
 
     def update_move_on_gui(self, best_move):
