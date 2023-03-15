@@ -1,5 +1,7 @@
 import tkinter as tk
 from PIL import ImageTk, Image
+import random
+import threading
 
 
 class TicTacToe:
@@ -10,7 +12,9 @@ class TicTacToe:
         self.window = tk.Tk()
         self.window.resizable(False, False)
         self.window.wm_attributes("-toolwindow", True)
+        self.current_player = random.choice(["X", "O"])
 
+        self.status_label = tk.Label(self.window, text=f"Player {self.current_player}'s Turn", bg='#2c2c2c', fg='#ffffff')
 
         image_size = (50, 50)  # Set the desired size for the images
         # Create a transparent background with the desired size
@@ -52,6 +56,7 @@ class TicTacToe:
         self.player_x_score_label.grid(row=1, column=3)
         self.player_o_score_label = tk.Label(self.window, text=f"Player O: {self.player_o_score}", bg='#2c2c2c', fg='#ffffff')
         self.player_o_score_label.grid(row=2, column=3)
+        self.start_game()
         self.window.mainloop()
 
 
@@ -85,19 +90,32 @@ class TicTacToe:
 
 
     def ai_move(self):
+        ai_thread = threading.Thread(target=self._ai_move, daemon=True)
+        ai_thread.start()
+
+
+    def _ai_move(self):
+        game_state = TicTacToeGameState()
+        game_state.board = [[self.board[i][j]["text"] for j in range(3)] for i in range(3)]
+        game_state.current_player = self.current_player
+
         best_score = float('-inf')
         best_move = None
 
         for i in range(3):
             for j in range(3):
-                if self.board[i][j]["text"] == "":
-                    self.board[i][j]["text"] = self.current_player
-                    score = self.minimax(False)
-                    self.board[i][j]["text"] = ""
+                if game_state.is_empty(i, j):
+                    game_state.make_move(i, j)
+                    score = self.minimax(game_state, False)
+                    game_state.undo_move(i, j)
                     if score > best_score:
                         best_score = score
                         best_move = (i, j)
 
+        self.window.after(0, lambda: self.update_move_on_gui(best_move))
+
+
+    def update_move_on_gui(self, best_move):
         self.board[best_move[0]][best_move[1]]["text"] = self.current_player
         self.board[best_move[0]][best_move[1]].config(image=self.x_image if self.current_player == "X" else self.o_image)
 
@@ -108,17 +126,17 @@ class TicTacToe:
             else:
                 self.player_o_score += 1
             self.update_scoreboard()
-            self.set_new_game_button_color('#00ff00')  # Add this line
+            self.set_new_game_button_color('#00ff00')
         elif self.check_draw():
             self.status_label["text"] = "It's a Draw!"
-            self.set_new_game_button_color('#00ff00')  # Add this line
+            self.set_new_game_button_color('#00ff00')
         else:
             self.current_player = "X"
             self.status_label["text"] = f"Player {self.current_player}'s Turn"
 
 
-    def minimax(self, is_maximizing, alpha=float('-inf'), beta=float('inf')):
-        result = self.check_winner()
+    def minimax(self, game_state, is_maximizing, alpha=float('-inf'), beta=float('inf')):
+        result = game_state.get_winner()
         if result is not None:
             return {"X": -1, "O": 1, "Draw": 0}[result]
 
@@ -126,10 +144,10 @@ class TicTacToe:
             best_score = float('-inf')
             for i in range(3):
                 for j in range(3):
-                    if self.board[i][j]["text"] == "":
-                        self.board[i][j]["text"] = "O"
-                        score = self.minimax(False, alpha, beta)
-                        self.board[i][j]["text"] = ""
+                    if game_state.is_empty(i, j):
+                        game_state.make_move(i, j)
+                        score = self.minimax(game_state, False, alpha, beta)
+                        game_state.undo_move(i, j)
                         best_score = max(score, best_score)
                         alpha = max(alpha, best_score)
                         if beta <= alpha:
@@ -139,10 +157,10 @@ class TicTacToe:
             best_score = float('inf')
             for i in range(3):
                 for j in range(3):
-                    if self.board[i][j]["text"] == "":
-                        self.board[i][j]["text"] = "X"
-                        score = self.minimax(True, alpha, beta)
-                        self.board[i][j]["text"] = ""
+                    if game_state.is_empty(i, j):
+                        game_state.make_move(i, j)
+                        score = self.minimax(game_state, True, alpha, beta)
+                        game_state.undo_move(i, j)
                         best_score = min(score, best_score)
                         beta = min(beta, best_score)
                         if beta <= alpha:
@@ -163,6 +181,7 @@ class TicTacToe:
             return self.board[0][2]["text"]
         return None
 
+
     def check_draw(self):
         for row in self.board:
             for button in row:
@@ -172,21 +191,67 @@ class TicTacToe:
 
 
     def reset_game(self):
-        self.current_player = "X"
-        self.status_label["text"] = "Player X's Turn"
         for i in range(3):
             for j in range(3):
                 self.board[i][j]["text"] = ""
-                self.board[i][j].config(image=self.empty_image)  # Update this line
-        self.set_new_game_button_color('#4a4a4a')  # Add this line
+                self.board[i][j].config(image=self.empty_image)
+        self.set_new_game_button_color('#4a4a4a')
+        self.start_game()
+
+
+    def start_game(self):
+        self.current_player = random.choice(["X", "O"])
+        self.status_label["text"] = f"Player {self.current_player}'s Turn"
+        if self.current_player == "O":
+            self.status_label["text"] = "AI is thinking..."
+            self.window.after(250, self.ai_move)
 
 
     def update_scoreboard(self):
         self.player_x_score_label["text"] = f"Player X: {self.player_x_score}"
-        self.player_o_score_label["text"] = f"Player O: {self.player_o_score}"
+        self.player_o_score_label["text"] = f"AI O: {self.player_o_score}"
 
     def set_new_game_button_color(self, color):
         self.new_game_button.configure(bg=color, activebackground=color)
+
+
+class TicTacToeGameState:
+    def __init__(self):
+        self.board = [['' for _ in range(3)] for _ in range(3)]
+        self.current_player = 'X'
+
+    def make_move(self, i, j):
+        if self.board[i][j] == '':
+            self.board[i][j] = self.current_player
+
+    def undo_move(self, i, j):
+        self.board[i][j] = ''
+
+    def get_winner(self):
+        for row in self.board:
+            if row[0] == row[1] == row[2] != '':
+                return row[0]
+        for col in range(3):
+            if self.board[0][col] == self.board[1][col] == self.board[2][col] != '':
+                return self.board[0][col]
+        if self.board[0][0] == self.board[1][1] == self.board[2][2] != '':
+            return self.board[0][0]
+        if self.board[0][2] == self.board[1][1] == self.board[2][0] != '':
+            return self.board[0][2]
+        return None
+
+    def is_draw(self):
+        for row in self.board:
+            for cell in row:
+                if cell == '':
+                    return False
+        return True
+
+    def is_empty(self, i, j):
+        return self.board[i][j] == ''
+
+    def switch_player(self):
+        self.current_player = 'O' if self.current_player == 'X' else 'X'
 
 
 if __name__ == "__main__":
