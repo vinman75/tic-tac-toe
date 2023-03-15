@@ -12,6 +12,9 @@ class TicTacToe:
         self.player_o_score = 0
 
         self.window = tk.Tk()
+        self.window.resizable(False, False)
+        self.window.wm_attributes("-toolwindow", True)
+
 
         image_size = (50, 50)  # Set the desired size for the images
 
@@ -50,8 +53,9 @@ class TicTacToe:
         self.status_label.grid(row=3, column=0, columnspan=3)
 
         self.new_game_button = tk.Button(self.window, text="New Game", command=self.reset_game,
-                                         bg='#4a4a4a', fg='#ffffff', activebackground='#666666', activeforeground='#ffffff')
-        self.new_game_button.grid(row=4, column=0, columnspan=3)
+                                        bg='#4a4a4a', fg='#ffffff', activebackground='#666666', activeforeground='#ffffff')
+        self.new_game_button.grid(row=3, column=3)  # Change this line
+
 
         # Add scoreboard labels
         self.scoreboard_label = tk.Label(self.window, text="Scoreboard", bg='#2c2c2c', fg='#ffffff')
@@ -64,8 +68,6 @@ class TicTacToe:
         self.player_o_score_label.grid(row=2, column=3)
 
         self.window.mainloop()
-
-    # ... (rest of the code) ...
 
 
     def reset_game(self):
@@ -87,8 +89,10 @@ class TicTacToe:
                 else:
                     self.player_o_score += 1
                 self.update_scoreboard()
+                self.set_new_game_button_color('#00ff00')  # Add this line
             elif self.check_draw():
                 self.status_label["text"] = "It's a Draw!"
+                self.set_new_game_button_color('#00ff00')  # Add this line
             else:
                 self.current_player = "O"
                 self.status_label["text"] = "AI is thinking..."
@@ -119,8 +123,10 @@ class TicTacToe:
             else:
                 self.player_o_score += 1
             self.update_scoreboard()
+            self.set_new_game_button_color('#00ff00')  # Add this line
         elif self.check_draw():
             self.status_label["text"] = "It's a Draw!"
+            self.set_new_game_button_color('#00ff00')  # Add this line
         else:
             self.current_player = "X"
             self.status_label["text"] = f"Player {self.current_player}'s Turn"
@@ -188,12 +194,17 @@ class TicTacToe:
             for j in range(3):
                 self.board[i][j]["text"] = ""
                 self.board[i][j].config(image=self.empty_image)  # Update this line
+        self.set_new_game_button_color('#4a4a4a')  # Add this line
+
 
 
 
     def update_scoreboard(self):
         self.player_x_score_label["text"] = f"Player X: {self.player_x_score}"
         self.player_o_score_label["text"] = f"Player O: {self.player_o_score}"
+
+    def set_new_game_button_color(self, color):
+        self.new_game_button.configure(bg=color, activebackground=color)
 
 
 if __name__ == "__main__":
