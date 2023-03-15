@@ -1,8 +1,5 @@
 import tkinter as tk
-from PIL import ImageTk, Image, ImageOps
-
-import tkinter as tk
-from PIL import ImageTk, Image, ImageOps
+from PIL import ImageTk, Image
 
 
 class TicTacToe:
@@ -10,25 +7,19 @@ class TicTacToe:
 
         self.player_x_score = 0
         self.player_o_score = 0
-
         self.window = tk.Tk()
         self.window.resizable(False, False)
         self.window.wm_attributes("-toolwindow", True)
 
 
         image_size = (50, 50)  # Set the desired size for the images
-
         # Create a transparent background with the desired size
         transparent_bg = Image.new('RGBA', image_size, (0, 0, 0, 0))
-
         # Create an empty_image with the same size as the other images
         self.empty_image = ImageTk.PhotoImage(transparent_bg)
-
         # Load the image, resize it, and composite it onto the transparent background
         self.x_image = ImageTk.PhotoImage(Image.alpha_composite(transparent_bg, Image.open("images/X.png").convert('RGBA').resize(image_size, Image.LANCZOS)))
-
         self.o_image = ImageTk.PhotoImage(Image.alpha_composite(transparent_bg, Image.open("images/O.png").convert('RGBA').resize(image_size, Image.LANCZOS)))
-
         self.blank_image = ImageTk.PhotoImage(transparent_bg)  # Create a transparent image for initial button state
 
         self.window.title("Tic Tac Toe")
@@ -47,8 +38,6 @@ class TicTacToe:
                 self.board[i][j].grid(row=i, column=j)
                 self.board[i][j].config(width=self.x_image.width(), height=self.x_image.height(), padx=0, pady=0)
 
-
-
         self.status_label = tk.Label(self.window, text="Player X's Turn", bg='#2c2c2c', fg='#ffffff')
         self.status_label.grid(row=3, column=0, columnspan=3)
 
@@ -56,17 +45,13 @@ class TicTacToe:
                                         bg='#4a4a4a', fg='#ffffff', activebackground='#666666', activeforeground='#ffffff')
         self.new_game_button.grid(row=3, column=3)  # Change this line
 
-
         # Add scoreboard labels
         self.scoreboard_label = tk.Label(self.window, text="Scoreboard", bg='#2c2c2c', fg='#ffffff')
         self.scoreboard_label.grid(row=0, column=3)
-
         self.player_x_score_label = tk.Label(self.window, text=f"Player X: {self.player_x_score}", bg='#2c2c2c', fg='#ffffff')
         self.player_x_score_label.grid(row=1, column=3)
-
         self.player_o_score_label = tk.Label(self.window, text=f"Player O: {self.player_o_score}", bg='#2c2c2c', fg='#ffffff')
         self.player_o_score_label.grid(row=2, column=3)
-
         self.window.mainloop()
 
 
@@ -132,7 +117,6 @@ class TicTacToe:
             self.status_label["text"] = f"Player {self.current_player}'s Turn"
 
 
-
     def minimax(self, is_maximizing, alpha=float('-inf'), beta=float('inf')):
         result = self.check_winner()
         if result is not None:
@@ -195,8 +179,6 @@ class TicTacToe:
                 self.board[i][j]["text"] = ""
                 self.board[i][j].config(image=self.empty_image)  # Update this line
         self.set_new_game_button_color('#4a4a4a')  # Add this line
-
-
 
 
     def update_scoreboard(self):
